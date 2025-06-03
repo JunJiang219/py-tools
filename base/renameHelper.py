@@ -55,7 +55,7 @@ def batch_rename_with_duplicate(src_dir, name_map, del_dir_existed=False):
 # 示例用法
 if __name__ == "__main__":
     # 配置参数
-    source_directory = "test/images/downloaded_images"  # 替换为实际目录
+    source_directory = "test/images/downloaded"  # 替换为实际目录
     
     # 重命名映射配置 {旧文件名: [新文件名1, 新文件名2...]}
     rename_mapping = {

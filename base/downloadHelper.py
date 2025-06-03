@@ -31,7 +31,7 @@ class RateLimiter:
             return True
         return False
     
-def download_batch(urls, save_dir, max_workers=8, target_subdir="downloaded_images", del_dir_existed=False):
+def download_batch(urls, save_dir, max_workers=8, target_subdir="downloaded", del_dir_existed=False):
     """
     批量下载图片并重命名临时目录
     
@@ -39,7 +39,7 @@ def download_batch(urls, save_dir, max_workers=8, target_subdir="downloaded_imag
     :param save_dir: 最终保存目录
     :param max_workers: 最大线程数
     :param target_subdir: 重命名后的子目录名
-    :param del_dir_existed: 是否删除已存在的目标目录（默认为False）downloaded_images
+    :param del_dir_existed: 是否删除已存在的目标目录（默认为False）downloaded
     """
     os.makedirs(save_dir, exist_ok=True)  # 确保目录存在
     # 检查目标目录是否存在
@@ -185,6 +185,6 @@ if __name__ == "__main__":
         urls=image_urls,
         save_dir="test/images",
         max_workers=8,
-        target_subdir="downloaded_images",
+        target_subdir="downloaded",
         del_dir_existed=True
     )
