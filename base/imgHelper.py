@@ -202,8 +202,8 @@ if __name__ == "__main__":
         # 第一阶段：尺寸调整+格式转换
         process_future = executor.submit(
             batch_process_images,
-            input_dir="test/images/downloaded",
-            output_dir="test/images/process_downloaded",
+            input_dir="test/images/download",
+            output_dir="test/images/process_download",
             new_size=(200, 200),
             target_format="PNG",
             quality=85,
@@ -218,8 +218,8 @@ if __name__ == "__main__":
         # 第二阶段：压缩处理
         compress_future = executor.submit(
             batch_compress_images,
-            input_dir="test/images/process_downloaded",
-            output_dir="test/images/compress_downloaded",
+            input_dir="test/images/process_download",
+            output_dir="test/images/compress_download",
             quality=85,
             max_workers=8
         )

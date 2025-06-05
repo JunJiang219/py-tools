@@ -2,7 +2,7 @@ import os
 import shutil
 from datetime import datetime
 
-def batch_rename_with_duplicate(src_dir, name_map, del_dir_existed=False):
+def batch_rename_with_duplicate(src_dir, name_map, dest_dir=None, del_dir_existed=False):
     """
     批量重命名文件并复制到新目录（支持单文件生成多个重命名副本）
     
@@ -14,7 +14,8 @@ def batch_rename_with_duplicate(src_dir, name_map, del_dir_existed=False):
     # 创建新目录（格式：rename_原目录名）
     base_name = os.path.basename(src_dir)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dest_dir = os.path.join(os.path.dirname(src_dir), f"rename_{base_name}")
+    if not dest_dir:
+        dest_dir = os.path.join(os.path.dirname(src_dir), f"rename_{base_name}")
 
     # 安全重命名（避免覆盖已有目录）
     if os.path.exists(dest_dir):
@@ -55,7 +56,7 @@ def batch_rename_with_duplicate(src_dir, name_map, del_dir_existed=False):
 # 示例用法
 if __name__ == "__main__":
     # 配置参数
-    source_directory = "test/images/downloaded"  # 替换为实际目录
+    source_directory = "test/images/download"  # 替换为实际目录
     
     # 重命名映射配置 {旧文件名: [新文件名1, 新文件名2...]}
     rename_mapping = {
@@ -64,4 +65,4 @@ if __name__ == "__main__":
     }
     
     # 执行重命名
-    batch_rename_with_duplicate(source_directory, rename_mapping, True)
+    batch_rename_with_duplicate(source_directory, rename_mapping, None, True)
