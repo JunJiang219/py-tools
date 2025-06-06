@@ -8,6 +8,7 @@ from base import imgHelper
 from core import config
 from prefect import flow, task
 from urllib.parse import urlparse, unquote
+import pandas as pd
 
 def parse_arguments():
     """解析命令行参数并返回字典"""
@@ -22,6 +23,62 @@ def parse_arguments():
     args = parser.parse_args()
     config.ARGS = vars(args)  # 将Namespace对象转为字典，存储到全局字典中
     return config.ARGS
+
+@task 
+def generate_php_games_array():
+    gp = config.ARGS['gp']
+    lang = config.ARGS['lang']
+    fileName = f"gp-{gp}.xlsx"
+    excel_path = os.path.join(config.DEFAULT_ROOT_DIR, "config", fileName)    # 例子：../py-do/config/gp-PS.xlsx
+    try:
+        # 读取Excel（关键参数配置）
+        df = pd.read_excel(
+            io=excel_path,
+            sheet_name=lang,
+            dtype={'disable': str, 'order': float},  # 确保类型准确
+            na_values=['', 'NA'],
+            keep_default_na=False,
+            usecols=['gameId', 'gameType', 'gameName', 'disable', 'order']
+        )
+        
+        # 过滤disable=1的行
+        df = df[df['disable'] != '1']
+        
+        # 处理排序（空值置后）
+        df['order'] = pd.to_numeric(df['order'], errors='coerce')
+        df_sorted = df.sort_values(
+            by='order', 
+            ascending=True,
+            na_position='last'
+        )
+        
+        # 创建输出目录
+        output_file = os.path.join(config.DEFAULT_ROOT_DIR, f"games/{lang}/gp-{gp}.php")    # 例子：../py-do/games/en/gp-PS.php
+        output_dir = os.path.dirname(output_file)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        
+        # 生成PHP格式并写入文件
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write("'games' => array(\n")
+            for i, (game_type, group) in enumerate(df_sorted.groupby('gameType')):
+                game_items = [
+                    f"'{row['gameId']}' => '{row['gameName'].replace("'", "\\'")}'"
+                    for _, row in group.iterrows()
+                ]
+                line = f"    '{game_type}' => array({', '.join(game_items)})"
+                if i < len(df_sorted.groupby('gameType')) - 1:
+                    line += ","
+                f.write(line + "\n")
+            f.write(")\n")
+        
+        print(f"✅ 文件已生成: {os.path.abspath(output_file)}")
+        
+    except FileNotFoundError:
+        print(f"❌ Excel文件不存在: {excel_path}")
+    except Exception as e:
+        print(f"⚠️ 处理失败: {str(e)}")
+    return True
 
 @task
 def read_config_task():
@@ -127,6 +184,11 @@ def del_middle_dir(compressOK):
     return True
 
 @flow
+def generate_php_games_array_flow():
+    generate_php_games_array()
+    return True
+
+@flow
 def process_images_flow():
     """处理图片的Prefect流"""
     if None == config.ARGS['gp']:
@@ -169,6 +231,8 @@ def main():
     print("args:", params)
 
     match params['task']:
+        case 'genGameName':
+            generate_php_games_array_flow()
         case "processImg":
             process_images_flow()
         case "processImg2":
