@@ -27,24 +27,20 @@ def parse_arguments():
 def read_config_task():
     """读取配置文件任务"""
     gp = config.ARGS['gp']
+    lang = config.ARGS['lang']
     fileName = f"gp-{gp}.xlsx"
     filePath = os.path.join(config.DEFAULT_ROOT_DIR, "config", fileName)    # 例子：../py-do/config/gp-PS.xlsx
     print(f"Reading config file: {filePath}")
-    return excelHelper.read_data(filePath)
+    return excelHelper.read_data(filePath, lang)
 
 @task
 def download_images_task(config_data):
     """下载图片任务"""
     gp = config.ARGS['gp']
     lang = config.ARGS['lang']
-    img_urls = []
-    for data in config_data:
-        if data[f'img_{lang}']:
-            img_urls.append(data[f'img_{lang}'])
-        elif data['img_en']:
-            img_urls.append(data['img_en'])
-
+    img_urls = [data['imgUrl'] for data in config_data]
     unique_img_urls = list(set(img_urls))   # 去重
+
     save_dir = os.path.join(config.DEFAULT_ROOT_DIR, 'download')    # 例子：../py-do/download
     target_subdir = f'{gp}-{lang}'    # 例子：PS-en
     downloadHelper.download_batch(
@@ -61,18 +57,9 @@ def rename_images_task(config_data, downloadOK):
     gp = config.ARGS['gp']
     lang = config.ARGS['lang']
     name_map = {}
-
-    def _extract_filename(url):
-        # 2. 从URL路径提取[3](@ref)
-        parsed = urlparse(url)
-        if parsed.path:
-            filename = unquote(parsed.path.rsplit('/', 1)[-1])
-            if '.' in filename and len(filename) > 4:  # 基本验证
-                return filename
         
     for data in config_data:
-        url = data[f'img_{lang}'] or data[f'img_{lang}']
-        filename = _extract_filename(url)
+        filename = data['imgName']
         if name_map.get(filename):
             name_map[filename].append(f'{data["gameId"]}.png')
         else:
@@ -112,7 +99,7 @@ def compress_images_task(processOK):
     subdir = f'{gp}-{lang}'
     src_subdir = f'process_{subdir}'
     src_dir = os.path.join(config.DEFAULT_ROOT_DIR, 'download', src_subdir)     # 例子：../py-do/download/process_PS-en
-    dst_dir = os.path.join(config.DEFAULT_ROOT_DIR, 'compress', subdir)         # 例子：../py-do/compress/PS-en
+    dst_dir = os.path.join(config.DEFAULT_ROOT_DIR, f'compress/{lang}/{gp}')    # 例子：../py-do/compress/en/PS
     imgHelper.batch_compress_images(
         input_dir=src_dir,
         output_dir=dst_dir,
